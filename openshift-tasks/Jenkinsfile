@@ -88,7 +88,6 @@ podTemplate(
       stage('Deploy to Dev') {
         echo "Deploying container image to Development Project"
 
-        steps {
           script {
             openshift.withCluster() {
               openshift.withProject("${devProject}") {
@@ -113,13 +112,11 @@ podTemplate(
               }
             }
           }
-        }
       }
 
       // Copy Image to Nexus container registry
       stage('Copy Image to Nexus container registry') {
         echo "Copy image to Nexus container registry"
-        steps {
           script {
             sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc.cluster.local:5000/${devProject}/tasks:${devTag} docker://nexus3-registry.gpte-hw-cicd.svc.cluster.local:5000/tasks:${devTag}"
 
@@ -130,7 +127,6 @@ podTemplate(
               }
             }
           }
-        }
       }
 
       // Blue/Green Deployment into Production
@@ -143,7 +139,6 @@ podTemplate(
         //      Set Image, Set VERSION
         //      Deploy into the other application
         //      Make sure the application is running and ready before proceeding
-        steps {
           echo "Blue/Green Deployment"
           script {
             openshift.withCluster() {
@@ -179,7 +174,6 @@ podTemplate(
               }
             }
           }
-        }
       }
 
       stage('Switch over to new Version') {
