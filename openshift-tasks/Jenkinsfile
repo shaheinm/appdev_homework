@@ -93,10 +93,12 @@ podTemplate(
               openshift.withProject("${devProject}") {
                 openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
 
-                openshift.selector('configmap', 'tasks-config').delete()
-                def configmap = openshift.create('configmap', 'tasks-config', '--from-file=./configuration/application-users.properties', '--from-file=./configuration/application-roles.properties' )
-
                 openshift.set("env", "dc", "tasks", "VERSION='${devTag} (tasks-dev)'")
+
+                openshift.selector("configmap", "tasks-config").delete()
+                openshift.selector("configmap", "tasks-config1").delete()
+                def configmap = openshift.create("configmap", "tasks-config", "--from-file=./configuration/application-users.properties" )
+                def configmap1 = openshift.create("configmap", "tasks-config1", "--from-file=./configuration/application-roles.properties" )
 
                 openshift.selector("dc", "tasks").rollout().latest();
 
@@ -150,6 +152,8 @@ podTemplate(
                 echo "Active Application:      " + activeApp
                 echo "Destination Application: " + destApp
 
+                openshift.set("env", "dc", "${destApp}", "VERSION='${prodTag} (${destApp})'")
+
                 def dc = openshift.selector("dc/${destApp}").object()
 
                 dc.remove('status')
@@ -158,9 +162,9 @@ podTemplate(
                 openshift.apply(dc)
 
                 openshift.selector("configmap", "${destApp}-config").delete()
-                def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties", "--from-file=./configuration/application-roles.properties" )
-
-                openshift.set("env", "dc", "${destApp}", "VERSION='${prodTag} (${destApp})'")
+                openshift.selector("configmap", "${destApp}-config1").delete()
+                def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties" )
+                def configmap1 = openshift.create("configmap", "${destApp}-config1", "--from-file=./configuration/application-roles.properties" )
 
                 openshift.selector("dc", "${destApp}").rollout().latest();
 
