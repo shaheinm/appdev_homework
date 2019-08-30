@@ -79,6 +79,9 @@ podTemplate(
             openshift.withProject("${devProject}") {
               openshift.selector("bc", "tasks").startBuild("--from-file=./target/openshift-tasks.war", "--wait=true")
               openshift.tag("tasks:${devTag}")
+            }
+          }
+        }
       }
 
       // Deploy the built image to the Development Environment.
