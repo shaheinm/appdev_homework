@@ -99,7 +99,7 @@ podTemplate(
                 openshift.selector('configmap', 'tasks-config').delete()
                 def configmap = openshift.create('configmap', 'tasks-config', '--from-file=./configuration/application-users.properties', '--from-file=./configuration/application-roles.properties' )
 
-                openshift.selector("dc", "tasks").rollout().latest();
+                openshift.selector("dc", "tasks").rollout().resume();
 
                 def dc = openshift.selector("dc", "tasks").object()
                 def dc_version = dc.status.latestVersion
@@ -164,7 +164,7 @@ podTemplate(
                 openshift.selector("configmap", "${destApp}-config").delete()
                 def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties" )
 
-                openshift.selector("dc", "${destApp}").rollout().latest();
+                openshift.selector("dc", "${destApp}").rollout().resume();
 
                 def dc_prod = openshift.selector("dc", "${destApp}").object()
                 def dc_version = dc_prod.status.latestVersion
