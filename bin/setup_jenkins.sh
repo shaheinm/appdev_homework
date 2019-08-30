@@ -13,18 +13,20 @@ CLUSTER=$3
 echo "Setting up Jenkins in project ${GUID}-jenkins from Git Repo ${REPO} for Cluster ${CLUSTER}"
 
 # Set up Jenkins with sufficient resources
-# TBD
+oc apply -f ../jenkins/jenkins-persistent.yaml -n ${GUID}-jenkins
 
 # Create custom agent container image with skopeo
-# TBD
+oc new-build -D $'FROM docker.io/openshift/jenkins-agent-maven-35-centos7:v3.11\n
+      USER root\nRUN yum -y install skopeo && yum clean all\n
+      USER 1001' --name=jenkins-agent-appdev -n ${GUID}-jenkins
 
 # Create pipeline build config pointing to the ${REPO} with contextDir `openshift-tasks`
-# TBD
+oc create -f ../jenkins/buildconfig.yaml -n ${GUID}-jenkins
 
 # Make sure that Jenkins is fully up and running before proceeding!
 while : ; do
   echo "Checking if Jenkins is Ready..."
-  AVAILABLE_REPLICAS=$(oc get dc jenkins -n ${GUID}-jenkins -o=jsonpath='{.status.availableReplicas}')
+  AVAILABLE_REPLICAS=$(oc get deployment jenkins -n ${GUID}-jenkins -o=jsonpath='{.status.availableReplicas}')
   if [[ "$AVAILABLE_REPLICAS" == "1" ]]; then
     echo "...Yes. Jenkins is ready."
     break
