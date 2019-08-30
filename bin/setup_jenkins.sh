@@ -13,6 +13,7 @@ CLUSTER=$3
 echo "Setting up Jenkins in project ${GUID}-jenkins from Git Repo ${REPO} for Cluster ${CLUSTER}"
 
 # Set up Jenkins with sufficient resources
+ls -al
 oc apply -f jenkins-persistent.yaml -n ${GUID}-jenkins
 
 # Create custom agent container image with skopeo
