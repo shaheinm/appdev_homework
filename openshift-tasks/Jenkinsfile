@@ -153,13 +153,6 @@ podTemplate(
                 def dc = openshift.selector("dc/${destApp}").object()
 
                 dc.remove('status')
-                dc.metadata.remove('annotations')
-                dc.metadata.remove('creationTimestamp')
-                dc.metadata.remove('generation')
-                dc.metadata.remove('resourceVersion')
-                dc.metadata.remove('selfLink')
-                dc.metadata.remove('uid')
-                dc.spec.remove('revisionHistoryLimit')
                 dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${devProject}/tasks:${prodTag}"
 
                 openshift.apply(dc)
