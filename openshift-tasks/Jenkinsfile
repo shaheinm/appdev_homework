@@ -91,7 +91,6 @@ podTemplate(
           script {
             openshift.withCluster() {
               openshift.withProject("${devProject}") {
-                openshift.selector("dc", "tasks").rollout().pause()
                 openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
 
                 openshift.set("env", "dc", "tasks", "VERSION='${devTag} (tasks-dev)'")
@@ -99,7 +98,7 @@ podTemplate(
                 openshift.selector('configmap', 'tasks-config').delete()
                 def configmap = openshift.create('configmap', 'tasks-config', '--from-file=./configuration/application-users.properties', '--from-file=./configuration/application-roles.properties' )
 
-                openshift.selector("dc", "tasks").rollout().resume();
+                openshift.selector("dc", "tasks").rollout().latest();
 
                 def dc = openshift.selector("dc", "tasks").object()
                 def dc_version = dc.status.latestVersion
@@ -150,7 +149,6 @@ podTemplate(
                 }
                 echo "Active Application:      " + activeApp
                 echo "Destination Application: " + destApp
-                openshift.selector("dc", "${destApp}").rollout().pause();
 
                 openshift.set("env", "dc", "${destApp}", "VERSION='${prodTag} (${destApp})'")
 
@@ -164,7 +162,7 @@ podTemplate(
                 openshift.selector("configmap", "${destApp}-config").delete()
                 def configmap = openshift.create("configmap", "${destApp}-config", "--from-file=./configuration/application-users.properties" )
 
-                openshift.selector("dc", "${destApp}").rollout().resume();
+                openshift.selector("dc", "${destApp}").rollout().latest();
 
                 def dc_prod = openshift.selector("dc", "${destApp}").object()
                 def dc_version = dc_prod.status.latestVersion
