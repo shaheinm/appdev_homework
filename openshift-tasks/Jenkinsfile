@@ -6,7 +6,7 @@ podTemplate(
   containers: [
     containerTemplate(
       name: "jnlp",
-      image: "docker-registry.default.svc:5000/7abb-jenkins/jenkins-agent-appdev",
+      image: "docker-registry.default.svc:5000/${GUID}-jenkins/jenkins-agent-appdev",
       resourceRequestMemory: "1Gi",
       resourceLimitMemory: "2Gi",
       resourceRequestCpu: "1",
@@ -37,8 +37,8 @@ podTemplate(
       // Set the tag for the production image: version
       def prodTag = "${version}"
 
-      def devProject = "7abb-tasks-dev"
-      def prodProject = "7abb-tasks-prod"
+      def devProject = "${GUID}-tasks-dev"
+      def prodProject = "${GUID}-tasks-prod"
       // Using Maven build the war file
       // Do not run tests in this step
       stage('Build war') {
@@ -91,6 +91,12 @@ podTemplate(
           script {
             openshift.withCluster() {
               openshift.withProject("${devProject}") {
+                openshift.selector("bc", "tasks").startBuild("--from-file=./target/openshift-tasks.war", "--wait=true")
+
+                openshift.tag("tasks:latest", "tasks:${devTag}")
+              }
+            }
+              openshift.withProject("${devProject}") {
                 openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
 
                 openshift.set("env", "dc", "tasks", "VERSION='${devTag} (tasks-dev)'")
@@ -141,6 +147,9 @@ podTemplate(
         //      Make sure the application is running and ready before proceeding
           echo "Blue/Green Deployment"
           script {
+            sh "oc set env dc/tasks-green -n ${GUID}-tasks-prod VERSION=\"${prodTag} (tasks-green)\""
+            sh "oc set env dc/tasks-blue -n ${GUID}-tasks-prod VERSION=\"${prodTag} (tasks-blue)\""
+
             openshift.withCluster() {
               openshift.withProject("${prodProject}") {
                 activeApp = openshift.selector("route", "tasks").object().spec.to.name
@@ -150,11 +159,8 @@ podTemplate(
                 echo "Active Application:      " + activeApp
                 echo "Destination Application: " + destApp
 
-                openshift.set("env", "dc", "${destApp}", "VERSION='${prodTag} (${destApp})'")
-
                 def dc = openshift.selector("dc/${destApp}").object()
 
-                dc.remove('status')
                 dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${devProject}/tasks:${prodTag}"
 
                 openshift.apply(dc)
